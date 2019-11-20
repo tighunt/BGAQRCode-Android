@@ -9,6 +9,7 @@ import android.view.View;
 
 import java.util.List;
 
+import cn.bingoogolapple.qrcode.core.BGAQRCodeUtil;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -20,6 +21,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
+        BGAQRCodeUtil.setDebug(true);
     }
 
     public void onClick(View view) {
@@ -33,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @Override
     protected void onStart() {
         super.onStart();
-        requestCodeQrcodePermissions();
+        requestCodeQRCodePermissions();
     }
 
     @Override
@@ -50,8 +53,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     @AfterPermissionGranted(REQUEST_CODE_QRCODE_PERMISSIONS)
-    private void requestCodeQrcodePermissions() {
-        String[] perms = {Manifest.permission.CAMERA, Manifest.permission.FLASHLIGHT};
+    private void requestCodeQRCodePermissions() {
+        String[] perms = {Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE};
         if (!EasyPermissions.hasPermissions(this, perms)) {
             EasyPermissions.requestPermissions(this, "扫描二维码需要打开相机和散光灯的权限", REQUEST_CODE_QRCODE_PERMISSIONS, perms);
         }

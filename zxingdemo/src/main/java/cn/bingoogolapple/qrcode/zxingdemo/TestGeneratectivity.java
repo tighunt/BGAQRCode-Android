@@ -3,9 +3,11 @@ package cn.bingoogolapple.qrcode.zxingdemo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -19,6 +21,8 @@ public class TestGeneratectivity extends AppCompatActivity {
     private ImageView mEnglishIv;
     private ImageView mChineseLogoIv;
     private ImageView mEnglishLogoIv;
+    private ImageView mBarcodeWithContentIv;
+    private ImageView mBarcodeWithoutContentIv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,10 +35,12 @@ public class TestGeneratectivity extends AppCompatActivity {
     }
 
     private void initView() {
-        mChineseIv = (ImageView) findViewById(R.id.iv_chinese);
-        mChineseLogoIv = (ImageView) findViewById(R.id.iv_chinese_logo);
-        mEnglishIv = (ImageView) findViewById(R.id.iv_english);
-        mEnglishLogoIv = (ImageView) findViewById(R.id.iv_english_logo);
+        mChineseIv = findViewById(R.id.iv_chinese);
+        mChineseLogoIv = findViewById(R.id.iv_chinese_logo);
+        mEnglishIv = findViewById(R.id.iv_english);
+        mEnglishLogoIv = findViewById(R.id.iv_english_logo);
+        mBarcodeWithContentIv = findViewById(R.id.iv_barcode_with_content);
+        mBarcodeWithoutContentIv = findViewById(R.id.iv_barcode_without_content);
     }
 
     private void createQRCode() {
@@ -42,62 +48,131 @@ public class TestGeneratectivity extends AppCompatActivity {
         createEnglishQRCode();
         createChineseQRCodeWithLogo();
         createEnglishQRCodeWithLogo();
+
+        createBarcodeWidthContent();
+        createBarcodeWithoutContent();
     }
 
     private void createChineseQRCode() {
-        QRCodeEncoder.encodeQRCode("王浩", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), new QRCodeEncoder.Delegate() {
+        /*
+        这里为了偷懒，就没有处理匿名 AsyncTask 内部类导致 Activity 泄漏的问题
+        请开发在使用时自行处理匿名内部类导致Activity内存泄漏的问题，处理方式可参考 https://github
+        .com/GeniusVJR/LearningNotes/blob/master/Part1/Android/Android%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E6%80%BB%E7%BB%93.md
+         */
+        new AsyncTask<Void, Void, Bitmap>() {
             @Override
-            public void onEncodeQRCodeSuccess(Bitmap bitmap) {
-                mChineseIv.setImageBitmap(bitmap);
+            protected Bitmap doInBackground(Void... params) {
+                return QRCodeEncoder.syncEncodeQRCode("王浩", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150));
             }
 
             @Override
-            public void onEncodeQRCodeFailure() {
-                Toast.makeText(TestGeneratectivity.this, "生成中文二维码失败", Toast.LENGTH_SHORT).show();
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    mChineseIv.setImageBitmap(bitmap);
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, "生成中文二维码失败", Toast.LENGTH_SHORT).show();
+                }
             }
-        });
+        }.execute();
     }
 
     private void createEnglishQRCode() {
-        QRCodeEncoder.encodeQRCode("bingoogolapple", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), Color.parseColor("#ff0000"), new QRCodeEncoder.Delegate() {
+        new AsyncTask<Void, Void, Bitmap>() {
             @Override
-            public void onEncodeQRCodeSuccess(Bitmap bitmap) {
-                mEnglishIv.setImageBitmap(bitmap);
+            protected Bitmap doInBackground(Void... params) {
+                return QRCodeEncoder.syncEncodeQRCode("bingoogolapple", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), Color.parseColor("#ff0000"));
             }
 
             @Override
-            public void onEncodeQRCodeFailure() {
-                Toast.makeText(TestGeneratectivity.this, "生成英文二维码失败", Toast.LENGTH_SHORT).show();
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    mEnglishIv.setImageBitmap(bitmap);
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, "生成英文二维码失败", Toast.LENGTH_SHORT).show();
+                }
             }
-        });
+        }.execute();
     }
 
     private void createChineseQRCodeWithLogo() {
-        QRCodeEncoder.encodeQRCode("王浩", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), Color.parseColor("#795dbf"), BitmapFactory.decodeResource(TestGeneratectivity.this.getResources(), R.mipmap.logo), new QRCodeEncoder.Delegate() {
+        new AsyncTask<Void, Void, Bitmap>() {
             @Override
-            public void onEncodeQRCodeSuccess(Bitmap bitmap) {
-                mChineseLogoIv.setImageBitmap(bitmap);
+            protected Bitmap doInBackground(Void... params) {
+                Bitmap logoBitmap = BitmapFactory.decodeResource(TestGeneratectivity.this.getResources(), R.mipmap.logo);
+                return QRCodeEncoder.syncEncodeQRCode("王浩", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), Color.parseColor("#ff0000"), logoBitmap);
             }
 
             @Override
-            public void onEncodeQRCodeFailure() {
-                Toast.makeText(TestGeneratectivity.this, "生成带logo的中文二维码失败", Toast.LENGTH_SHORT).show();
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    mChineseLogoIv.setImageBitmap(bitmap);
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, "生成带logo的中文二维码失败", Toast.LENGTH_SHORT).show();
+                }
             }
-        });
+        }.execute();
     }
 
     private void createEnglishQRCodeWithLogo() {
-        QRCodeEncoder.encodeQRCode("bingoogolapple", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), Color.parseColor("#0000ff"), BitmapFactory.decodeResource(TestGeneratectivity.this.getResources(), R.mipmap.logo), new QRCodeEncoder.Delegate() {
+        new AsyncTask<Void, Void, Bitmap>() {
             @Override
-            public void onEncodeQRCodeSuccess(Bitmap bitmap) {
-                mEnglishLogoIv.setImageBitmap(bitmap);
+            protected Bitmap doInBackground(Void... params) {
+                Bitmap logoBitmap = BitmapFactory.decodeResource(TestGeneratectivity.this.getResources(), R.mipmap.logo);
+                return QRCodeEncoder.syncEncodeQRCode("bingoogolapple", BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150), Color.BLACK, Color.WHITE,
+                        logoBitmap);
             }
 
             @Override
-            public void onEncodeQRCodeFailure() {
-                Toast.makeText(TestGeneratectivity.this, "生成带logo的英文二维码失败", Toast.LENGTH_SHORT).show();
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    mEnglishLogoIv.setImageBitmap(bitmap);
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, "生成带logo的英文二维码失败", Toast.LENGTH_SHORT).show();
+                }
             }
-        });
+        }.execute();
+    }
+
+
+    private void createBarcodeWidthContent() {
+        new AsyncTask<Void, Void, Bitmap>() {
+            @Override
+            protected Bitmap doInBackground(Void... params) {
+                int width = BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150);
+                int height = BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 70);
+                int textSize = BGAQRCodeUtil.sp2px(TestGeneratectivity.this, 14);
+                return QRCodeEncoder.syncEncodeBarcode("bga123", width, height, textSize);
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    mBarcodeWithContentIv.setImageBitmap(bitmap);
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, "生成条底部带文字形码失败", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }.execute();
+    }
+
+    private void createBarcodeWithoutContent() {
+        new AsyncTask<Void, Void, Bitmap>() {
+            @Override
+            protected Bitmap doInBackground(Void... params) {
+                int width = BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 150);
+                int height = BGAQRCodeUtil.dp2px(TestGeneratectivity.this, 70);
+                return QRCodeEncoder.syncEncodeBarcode("bingoogolapple123", width, height, 0);
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    mBarcodeWithoutContentIv.setImageBitmap(bitmap);
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, "生成条底部不带文字形码失败", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }.execute();
     }
 
     public void decodeChinese(View v) {
@@ -124,22 +199,38 @@ public class TestGeneratectivity extends AppCompatActivity {
         decode(bitmap, "解析带logo的英文二维码失败");
     }
 
-    public void decodeIsbn(View v) {
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_isbn);
-        decode(bitmap, "解析ISBN失败");
+    public void decodeBarcodeWithContent(View v) {
+        mBarcodeWithContentIv.setDrawingCacheEnabled(true);
+        Bitmap bitmap = mBarcodeWithContentIv.getDrawingCache();
+        decode(bitmap, "识别底部带文字的条形码失败");
     }
 
-    private void decode(Bitmap bitmap, final String errorTip) {
-        QRCodeDecoder.decodeQRCode(bitmap, new QRCodeDecoder.Delegate() {
+    public void decodeBarcodeWithoutContent(View v) {
+        mBarcodeWithoutContentIv.setDrawingCacheEnabled(true);
+        Bitmap bitmap = mBarcodeWithoutContentIv.getDrawingCache();
+        decode(bitmap, "识别底部没带文字的条形码失败");
+    }
+
+    private void decode(final Bitmap bitmap, final String errorTip) {
+        /*
+        这里为了偷懒，就没有处理匿名 AsyncTask 内部类导致 Activity 泄漏的问题
+        请开发在使用时自行处理匿名内部类导致Activity内存泄漏的问题，处理方式可参考 https://github
+        .com/GeniusVJR/LearningNotes/blob/master/Part1/Android/Android%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E6%80%BB%E7%BB%93.md
+         */
+        new AsyncTask<Void, Void, String>() {
             @Override
-            public void onDecodeQRCodeSuccess(String result) {
-                Toast.makeText(TestGeneratectivity.this, result, Toast.LENGTH_SHORT).show();
+            protected String doInBackground(Void... params) {
+                return QRCodeDecoder.syncDecodeQRCode(bitmap);
             }
 
             @Override
-            public void onDecodeQRCodeFailure() {
-                Toast.makeText(TestGeneratectivity.this, errorTip, Toast.LENGTH_SHORT).show();
+            protected void onPostExecute(String result) {
+                if (TextUtils.isEmpty(result)) {
+                    Toast.makeText(TestGeneratectivity.this, errorTip, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(TestGeneratectivity.this, result, Toast.LENGTH_SHORT).show();
+                }
             }
-        });
+        }.execute();
     }
 }
